@@ -1,20 +1,24 @@
-// routes/authRoutes.js
 import express from "express";
 import {
+  signup,
   login,
   forgotPassword,
   resetPassword,
+  refreshToken,
 } from "../controllers/authController.js";
+import { authenticate } from "../middlewares/authMiddleware.js";
+
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import { generateTokens } from "../services/authService.js";
 
 const router = express.Router();
 
-// Login route
+router.post("/signup", signup);
 router.post("/login", login);
-
-// Forgot password route
 router.post("/forgot-password", forgotPassword);
-
-// Reset password route
 router.post("/reset-password", resetPassword);
+
+router.post("/refresh-token", refreshToken);
 
 export default router;
