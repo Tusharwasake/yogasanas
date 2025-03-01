@@ -3,8 +3,15 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { sendOtpEmail } from "../utils/emailService.js";
 
-  // Function to generate access & refresh tokens
+if (!process.env.JWT_SECRET || !process.env.REFRESH_SECRET) {
+  throw new Error("JWT_SECRET or REFRESH_SECRET is missing in .env file");
+}
+
 export const generateTokens = (userId, email) => {
+  if (!process.env.JWT_SECRET || !process.env.REFRESH_SECRET) {
+    throw new Error("JWT_SECRET or REFRESH_SECRET is not defined in .env file");
+  }
+
   const accessToken = jwt.sign({ userId, email }, process.env.JWT_SECRET, {
     expiresIn: "1h",
   });
@@ -29,16 +36,23 @@ export const createUser = async ({ name, email, password, role = "user" }) => {
 
 // Login user function (ensures refresh token changes)
 export const loginUser = async (email, password) => {
+  console.log("Checking email:", email);
   const user = await User.findOne({ email });
-  if (!user) throw new Error("User not found");
+
+  if (!user) {
+    console.log("User not found in DB!");
+    throw new Error("User not found");
+  }
+
+  console.log("User found:", user);
 
   const isPasswordValid = await argon2.verify(user.password, password);
-  if (!isPasswordValid) throw new Error("Invalid password");
+  if (!isPasswordValid) {
+    console.log("Invalid password entered");
+    throw new Error("Invalid password");
+  }
 
-  // Generate new access & refresh tokens
   const { accessToken, refreshToken } = generateTokens(user._id, user.email);
-
-  // ✅ Replace old refresh token with new one in database
   user.refreshToken = refreshToken;
   await user.save();
 
