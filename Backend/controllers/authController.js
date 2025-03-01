@@ -59,7 +59,7 @@ export const login = async (req, res) => {
       email,
       password
     );
-
+    console.log(user, accessToken, refreshToken);
     res.status(200).json({
       message: "Login successful",
       user: {
@@ -128,7 +128,10 @@ export const refreshToken = async (req, res) => {
     }
 
     // Generate new access & refresh tokens
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id, user.email);
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(
+      user._id,
+      user.email
+    );
 
     // ✅ Store new refresh token in the database
     user.refreshToken = newRefreshToken;
@@ -140,4 +143,3 @@ export const refreshToken = async (req, res) => {
     res.status(403).json({ message: "Invalid or expired refresh token" });
   }
 };
-
