@@ -4,7 +4,9 @@ import authRoutes from "./routes/authRoutes.js";
 import morgan from "morgan";
 import cors from "cors";
 import { errorHandler } from "./middlewares/errorMiddleware.js";
-import "dotenv/config";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 
@@ -15,6 +17,9 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/auth", authRoutes);
+
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
+console.log("REFRESH_SECRET:", process.env.REFRESH_SECRET);
 
 // Global error handler
 app.use(errorHandler);
@@ -27,4 +32,3 @@ mongoose
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    
