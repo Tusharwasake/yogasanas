@@ -15,7 +15,9 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
+      <div className=" bg-gray-900 text-white">
       <Sidebar />
+    </div>
 
       {/* Dashboard Content */}
       <div className="flex-1 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-gray-800 p-6">
