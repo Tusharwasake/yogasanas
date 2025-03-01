@@ -4,6 +4,7 @@ import authRoutes from "./routes/authRoutes.js";
 import morgan from "morgan";
 import cors from "cors";
 import { errorHandler } from "./middlewares/errorMiddleware.js";
+import asanaRoutes from "./routes/asanaRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -17,9 +18,7 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/auth", authRoutes);
-
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
-console.log("REFRESH_SECRET:", process.env.REFRESH_SECRET);
+app.use("/api/asanas", asanaRoutes);  
 
 // Global error handler
 app.use(errorHandler);
