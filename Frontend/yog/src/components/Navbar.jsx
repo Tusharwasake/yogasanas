@@ -69,7 +69,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 text-20xl font-bold">
             {["home", "features", "benefits", "how-it-works", "community"].map(
               (section, index) => (
                 <motion.div
@@ -83,7 +83,7 @@ const Navbar = () => {
                     to={section}
                     smooth={true}
                     duration={500}
-                    className="nav-link text-base font-medium capitalize"
+                     className="nav-link text-lg font-semibold capitalize"
                   >
                     {section.replace("-", " ")}
                   </ScrollLink>
@@ -96,7 +96,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {/* 🔥 Navigate to Login Page */}
             <motion.button
-              className="btn-secondary"
+              className="nav-link text-lg font-semibold capitalize"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0 }}
@@ -109,7 +109,7 @@ const Navbar = () => {
 
             {/* 🔥 Navigate to Signup Page */}
             <motion.button
-              className="btn-primary"
+             className="nav-link text-lg font-semibold capitalize"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0 }}
