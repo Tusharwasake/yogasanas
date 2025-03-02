@@ -1,5 +1,5 @@
+import moment from "moment";
 import Progress from "../models/Progress.js";
-import moment from "moment"; // Use moment.js to handle weeks
 
 export const logAsana = async (req, res) => {
   try {
@@ -7,12 +7,13 @@ export const logAsana = async (req, res) => {
     const userId = req.user.userId;
 
     let progress = await Progress.findOne({ userId });
+    console.log("Existing Progress Data:", progress);
 
     // Create progress if it doesn't exist
     if (!progress) {
       progress = new Progress({
         userId,
-        goal: 100, // Default goal
+        goal: 100,
         progress: {
           Mon: 0,
           Tue: 0,
@@ -28,8 +29,8 @@ export const logAsana = async (req, res) => {
     }
 
     const today = moment();
-    const weekStart = today.startOf("isoWeek").toDate(); // Monday as the start of the week
-    const dayOfWeek = today.format("ddd"); // E.g., "Mon", "Tue", etc.
+    const weekStart = today.startOf("isoWeek").toDate();
+    const dayOfWeek = today.format("ddd");
 
     // **Reset weekly progress if it's a new week**
     if (
@@ -46,7 +47,7 @@ export const logAsana = async (req, res) => {
         Fri: 0,
         Sat: 0,
         Sun: 0,
-      }; // Reset daily stats
+      };
     }
 
     // **Update streaks**
@@ -54,32 +55,35 @@ export const logAsana = async (req, res) => {
       ? moment(progress.lastActivity)
       : null;
     if (lastActivityDate && lastActivityDate.isSame(today, "day")) {
-      // Same day, no streak increase
+      // No change
     } else if (
       lastActivityDate &&
       lastActivityDate.add(1, "day").isSame(today, "day")
     ) {
       progress.streak += 1;
     } else {
-      progress.streak = 1; // Reset if a day is skipped
+      progress.streak = 1;
     }
 
     progress.lastActivity = today.toDate();
     progress.totalAsanas += 1;
-    progress.progress[dayOfWeek] += 1; // ✅ Update daily progress
-    progress.weeklyStats.asanasCompleted += 1; // ✅ Track weekly total
-    progress.asanaLog.push({ date: today.toDate(), name, difficulty }); // ✅ Log Asana
+    progress.progress[dayOfWeek] += 1;
+    progress.weeklyStats.asanasCompleted += 1;
 
-    // ✅ Check if user reached goal
-    let goalAchieved = false;
-    if (progress.totalAsanas >= progress.goal) {
-      goalAchieved = true;
+    // **Append Asana Log**
+    if (!progress.asanaLog) {
+      progress.asanaLog = [];
     }
+    progress.asanaLog.push({ date: today.toDate(), name, difficulty });
 
-    await progress.save();
-    res
-      .status(200)
-      .json({ message: "Asana logged successfully", progress, goalAchieved });
+    console.log("Updated Progress Before Save:", progress);
+
+    // **Force update in MongoDB**
+    await Progress.updateOne({ userId }, progress, { upsert: true });
+
+    console.log("Progress Saved Successfully!");
+
+    res.status(200).json({ message: "Asana logged successfully", progress });
   } catch (error) {
     console.error("Log Asana Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
