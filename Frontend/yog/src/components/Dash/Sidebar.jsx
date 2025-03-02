@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiHome, FiBarChart2, FiUsers, FiAward, FiSettings, FiChevronLeft, FiChevronRight, FiBell, FiTarget, FiBook } from "react-icons/fi";
-
+import { FiHome, FiBarChart2, FiUsers, FiAward, FiSettings, FiChevronLeft, FiChevronRight, FiBell, FiTarget, FiBook,FiLogOut  } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FiHome /> },
@@ -12,6 +13,9 @@ const Sidebar = () => {
     { name: "Asana Library", path: "/asana-library", icon: <FiBook /> },
     { name: "Settings", path: "/settings", icon: <FiSettings /> },
   ];
+  const handleLogout = () => {
+    navigate("/");
+  };
 
   return (
     <div className={`bg-gray-900 text-white h-screen p-4 flex flex-col ${isCollapsed ? "w-16" : "w-64"} transition-all duration-300`}>
@@ -28,6 +32,14 @@ const Sidebar = () => {
           </li>
         ))}
       </ul>
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-red-600 transition-all"
+      >
+        <FiLogOut />
+        {!isCollapsed && <span>Logout</span>}
+      </button>
     </div>
   );
 };

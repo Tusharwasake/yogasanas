@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route,Navigate } from "react-router-dom";
 import Hero from "./pages/HomePage";
 // import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -49,7 +49,7 @@ function App() {
 <Route path="/asanas/:asanaId" element={<PrivateRoute><AsanaDetails /></PrivateRoute>} />
 <Route path="/add-asana" element={<PrivateRoute><AddAsanaForm /></PrivateRoute>} />
 <Route path="/edit-asana/:asanaId" element={<PrivateRoute><EditAsanaForm /></PrivateRoute>} />
-
+<Route path="*" element={<Navigate to="/" />} />
       </Routes>
       </Router>
   );
