@@ -1,17 +1,33 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Link } from "react-router-dom";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [expiredSession, setExpiredSession] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for redirects with expired session message
+  useEffect(() => {
+    // Check if redirected from another page with state
+    if (location.state?.message) {
+      setExpiredSession(true);
+      setError(location.state.message);
+      
+      // Clear the state to prevent message showing after page refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setExpiredSession(false);
     setLoading(true);
 
     if (!email || !password) {
@@ -32,7 +48,9 @@ const Login = () => {
       localStorage.setItem("token", res.data.accessToken);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      navigate("/home");
+      // Redirect to home or previous page
+      const returnTo = location.state?.from || "/home";
+      navigate(returnTo);
     } catch (err) {
       console.error("Error:", err.response?.data);
       setError(err.response?.data?.msg || "Login failed. Please check your credentials.");
@@ -46,7 +64,15 @@ const Login = () => {
       <div className="w-full max-w-md bg-gray-800 shadow-lg rounded-lg p-8 border border-gray-700">
         <h2 className="text-2xl font-bold text-center text-white mb-6">Login</h2>
 
-        {error && <p className="bg-red-500 text-white p-3 rounded text-sm text-center">{error}</p>}
+        {expiredSession ? (
+          <div className="bg-yellow-600 text-white p-3 rounded text-sm text-center mb-4">
+            {error}
+          </div>
+        ) : error ? (
+          <div className="bg-red-500 text-white p-3 rounded text-sm text-center mb-4">
+            {error}
+          </div>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

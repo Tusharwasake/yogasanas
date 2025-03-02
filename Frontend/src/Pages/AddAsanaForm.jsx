@@ -17,12 +17,16 @@ const AddAsanaForm = () => {
   // For demo purposes - check localStorage or your auth context in real app
   useEffect(() => {
     // This is a placeholder - in your actual app, get the role from your auth system
-    const role = localStorage.getItem('userRole') || 'user';
-    setUserRole(role);
-    
-    // Redirect if not authorized
-    if (role !== 'super-admin' && role !== 'moderator') {
-      setError('Access denied. You must be a super-admin or moderator to add asanas.');
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      setUserRole(user.role || 'user');
+      
+      // Redirect if not authorized
+      if (user.role !== 'super-admin' && user.role !== 'moderator') {
+        setError('Access denied. You must be a super-admin or moderator to add asanas.');
+      }
+    } catch (err) {
+      console.error('Error parsing user data:', err);
     }
   }, []);
 
@@ -91,6 +95,19 @@ const AddAsanaForm = () => {
         body: JSON.stringify(payload)
       });
       
+      // Handle token expiration (401 Unauthorized)
+      if (response.status === 401) {
+        // Clear auth data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect to login page with message
+        navigate('/login', { 
+          state: { message: 'Your session has expired. Please log in again.' } 
+        });
+        return;
+      }
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -134,6 +151,7 @@ const AddAsanaForm = () => {
         )}
         
         <form onSubmit={handleSubmit}>
+          {/* Form content (unchanged) */}
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
               Asana Name*
@@ -150,6 +168,7 @@ const AddAsanaForm = () => {
             />
           </div>
           
+          {/* Other form fields (unchanged) */}
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2" htmlFor="description">
               Description*
