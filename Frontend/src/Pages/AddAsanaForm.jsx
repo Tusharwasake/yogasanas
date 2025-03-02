@@ -15,20 +15,20 @@ const AddAsanaForm = () => {
   });
 
   // For demo purposes - check localStorage or your auth context in real app
-  useEffect(() => {
-    // This is a placeholder - in your actual app, get the role from your auth system
-    try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      setUserRole(user.role || 'user');
+  // useEffect(() => {
+  //   // This is a placeholder - in your actual app, get the role from your auth system
+  //   try {
+  //     const user = JSON.parse(localStorage.getItem('user') || '{}');
+  //     setUserRole(user.role || 'user');
       
-      // Redirect if not authorized
-      if (user.role !== 'super-admin' && user.role !== 'moderator') {
-        setError('Access denied. You must be a super-admin or moderator to add asanas.');
-      }
-    } catch (err) {
-      console.error('Error parsing user data:', err);
-    }
-  }, []);
+  //     // Redirect if not authorized
+  //     if (user.role !== 'super-admin' && user.role !== 'moderator') {
+  //       setError('Access denied. You must be a super-admin or moderator to add asanas.');
+  //     }
+  //   } catch (err) {
+  //     console.error('Error parsing user data:', err);
+  //   }
+  // }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
