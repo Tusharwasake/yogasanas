@@ -1,7 +1,6 @@
 import Progress from "../models/Progress.js";
-import User from "../models/User.js";
+import moment from "moment"; // Use moment.js to handle weeks
 
-// ✅ Log Completed Asanas
 export const logAsana = async (req, res) => {
   try {
     const { asanaId, name, difficulty } = req.body;
@@ -9,66 +8,95 @@ export const logAsana = async (req, res) => {
 
     let progress = await Progress.findOne({ userId });
 
-    // If no progress exists, create a new record
+    // Create progress if it doesn't exist
     if (!progress) {
-      progress = new Progress({ userId, asanasCompleted: [], streak: 0 });
+      progress = new Progress({
+        userId,
+        goal: 100, // Default goal
+        progress: {
+          Mon: 0,
+          Tue: 0,
+          Wed: 0,
+          Thu: 0,
+          Fri: 0,
+          Sat: 0,
+          Sun: 0,
+        },
+        asanaLog: [],
+        weeklyStats: {},
+      });
     }
 
-    // Check if the user is continuing their streak
-    const today = new Date();
-    const lastActivityDate = progress.lastActivity
-      ? new Date(progress.lastActivity)
-      : null;
+    const today = moment();
+    const weekStart = today.startOf("isoWeek").toDate(); // Monday as the start of the week
+    const dayOfWeek = today.format("ddd"); // E.g., "Mon", "Tue", etc.
 
+    // **Reset weekly progress if it's a new week**
     if (
-      lastActivityDate &&
-      today.toDateString() === lastActivityDate.toDateString()
+      !progress.weeklyStats.weekStart ||
+      moment(progress.weeklyStats.weekStart).isBefore(weekStart)
     ) {
+      progress.weeklyStats.weekStart = weekStart;
+      progress.weeklyStats.asanasCompleted = 0;
+      progress.progress = {
+        Mon: 0,
+        Tue: 0,
+        Wed: 0,
+        Thu: 0,
+        Fri: 0,
+        Sat: 0,
+        Sun: 0,
+      }; // Reset daily stats
+    }
+
+    // **Update streaks**
+    const lastActivityDate = progress.lastActivity
+      ? moment(progress.lastActivity)
+      : null;
+    if (lastActivityDate && lastActivityDate.isSame(today, "day")) {
       // Same day, no streak increase
     } else if (
       lastActivityDate &&
-      today - lastActivityDate <= 86400000 * 1.5 // Within 1.5 days
+      lastActivityDate.add(1, "day").isSame(today, "day")
     ) {
-      progress.streak += 1; // 🔥 Increase streak
+      progress.streak += 1;
     } else {
-      progress.streak = 1; // Reset streak if a day is skipped
+      progress.streak = 1; // Reset if a day is skipped
     }
 
-    progress.lastActivity = today;
-
-    // Check for streak-based badges
-    if (progress.streak === 3 && !progress.badges.includes("3-Day Streak")) {
-      progress.badges.push("3-Day Streak");
-    }
-    if (progress.streak === 7 && !progress.badges.includes("1-Week Streak")) {
-      progress.badges.push("1-Week Streak");
-    }
-    if (progress.streak === 30 && !progress.badges.includes("1-Month Streak")) {
-      progress.badges.push("1-Month Streak");
-    }
-
-    // Log asana completion
-    progress.asanasCompleted.push({ asanaId, name, difficulty });
+    progress.lastActivity = today.toDate();
     progress.totalAsanas += 1;
+    progress.progress[dayOfWeek] += 1; // ✅ Update daily progress
+    progress.weeklyStats.asanasCompleted += 1; // ✅ Track weekly total
+    progress.asanaLog.push({ date: today.toDate(), name, difficulty }); // ✅ Log Asana
+
+    // ✅ Check if user reached goal
+    let goalAchieved = false;
+    if (progress.totalAsanas >= progress.goal) {
+      goalAchieved = true;
+    }
 
     await progress.save();
-    res.status(200).json({ message: "Asana logged successfully", progress });
+    res
+      .status(200)
+      .json({ message: "Asana logged successfully", progress, goalAchieved });
   } catch (error) {
     console.error("Log Asana Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-// ✅ Get User's Progress (Stats & Streaks)
 export const getUserProgress = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const progress = await Progress.findOne({ userId }).populate(
-      "asanasCompleted.asanaId"
-    );
+    const userId = req.user.userId; // Get authenticated user ID
 
-    if (!progress)
-      return res.status(404).json({ message: "No progress found" });
+    const progress = await Progress.findOne({ userId })
+      .populate("asanasCompleted.asanaId", "name difficulty") // ✅ Correct field name
+      .exec();
+
+    if (!progress) {
+      return res.status(404).json({ message: "Progress data not found" });
+    }
 
     res.status(200).json(progress);
   } catch (error) {
@@ -88,6 +116,65 @@ export const getLeaderboard = async (req, res) => {
     res.status(200).json(leaderboard);
   } catch (error) {
     console.error("Leaderboard Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getWeeklyProgress = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const progress = await Progress.findOne({ userId });
+
+    if (!progress) {
+      return res.status(404).json({ message: "No progress found" });
+    }
+
+    res.status(200).json({
+      totalAsanas: progress.totalAsanas,
+      goal: progress.goal,
+      progress: progress.progress, // ✅ Daily breakdown (Mon-Sun)
+      asanaLog: progress.asanaLog.slice(-10), // ✅ Last 10 asanas
+    });
+  } catch (error) {
+    console.error("Weekly Progress Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getWeeklyLeaderboard = async (req, res) => {
+  try {
+    const today = moment().startOf("isoWeek").toDate();
+
+    const leaderboard = await Progress.find({ "weeklyStats.weekStart": today })
+      .sort({ "weeklyStats.asanasCompleted": -1, streak: -1 })
+      .limit(10)
+      .populate("userId", "name profilePicture");
+
+    res.status(200).json(leaderboard);
+  } catch (error) {
+    console.error("Leaderboard Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateGoal = async (req, res) => {
+  try {
+    const { goal } = req.body;
+    const userId = req.user.userId;
+
+    if (!goal || goal < 1)
+      return res.status(400).json({ message: "Invalid goal value" });
+
+    const progress = await Progress.findOne({ userId });
+    if (!progress)
+      return res.status(404).json({ message: "Progress not found" });
+
+    progress.goal = goal;
+    await progress.save();
+
+    res.status(200).json({ message: "Goal updated successfully", goal });
+  } catch (error) {
+    console.error("Update Goal Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
