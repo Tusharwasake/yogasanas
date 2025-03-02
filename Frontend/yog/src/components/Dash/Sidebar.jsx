@@ -8,12 +8,8 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: "Dashboard", path: "/dashboard", icon: <FiHome /> },
-    { name: "My Progress", path: "/progress", icon: <FiBarChart2 /> },
     { name: "Leaderboard", path: "/leaderboard", icon: <FiAward /> },
-    { name: "Community", path: "/community", icon: <FiUsers /> },
     { name: "Asana Library", path: "/asana-library", icon: <FiBook /> },
-    { name: "Goals & Streaks", path: "/goals", icon: <FiTarget /> },
-    { name: "Notifications", path: "/notifications", icon: <FiBell /> },
     { name: "Settings", path: "/settings", icon: <FiSettings /> },
   ];
 
