@@ -4,6 +4,7 @@ const progressSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   totalAsanas: { type: Number, default: 0 },
   goal: { type: Number, default: 100 },
+
   progress: {
     Mon: { type: Number, default: 0 },
     Tue: { type: Number, default: 0 },
@@ -13,12 +14,12 @@ const progressSchema = new mongoose.Schema({
     Sat: { type: Number, default: 0 },
     Sun: { type: Number, default: 0 },
   },
+
   asanasCompleted: [
-    // ✅ Fix: Correct field name
     {
       asanaId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Asana",
+        ref: "Asana", // ✅ Ensure this is the correct collection name
         required: true,
       },
       date: { type: Date, default: Date.now },
@@ -28,6 +29,7 @@ const progressSchema = new mongoose.Schema({
       },
     },
   ],
+
   streak: { type: Number, default: 0 },
   lastActivity: { type: Date },
   weeklyStats: {
@@ -36,6 +38,9 @@ const progressSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
 });
+
+// ✅ Add Index for faster queries
+progressSchema.index({ userId: 1 });
 
 const Progress = mongoose.model("Progress", progressSchema);
 export default Progress;
