@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import '../Styles/ResetPassword.css'
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-
-  // Retrieve email from localStorage
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("resetEmail");
@@ -15,11 +16,6 @@ const ResetPassword = () => {
       setEmail(storedEmail);
     }
   }, []);
-
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,44 +30,55 @@ const ResetPassword = () => {
       );
 
       setSuccess(response.data.message || "Password reset successful!");
-      localStorage.removeItem("resetEmail"); // Clear stored email
-      setTimeout(() => navigate("/login"), 2000); // Redirect to login
+      localStorage.removeItem("resetEmail");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to reset password.");
     }
   };
 
   return (
-    <div className="reset-password-container">
-    <form onSubmit={handleSubmit}>
-      <h2>Reset Password</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
+    <div className="flex justify-center items-center min-h-screen bg-gray-900 text-gray-200">
+      <div className="w-full max-w-md bg-gray-800 shadow-lg rounded-lg p-8 border border-gray-700">
+        <h2 className="text-2xl font-bold text-center text-white mb-6">Reset Password</h2>
 
-      <input
-        type="email"
-        value={email}
-        readOnly // Prevent user from editing email
-      />
+        {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+        {success && <p className="text-green-500 text-sm text-center mb-4">{success}</p>}
 
-      <input
-        type="text"
-        placeholder="Enter OTP"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value)}
-        required
-      />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            value={email}
+            readOnly
+            className="w-full p-3 bg-gray-700 border border-purple-500 rounded opacity-80 cursor-not-allowed text-gray-300"
+          />
 
-      <input
-        type="password"
-        placeholder="New Password"
-        value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-        required
-      />
+          <input
+            type="text"
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            required
+            className="w-full p-3 bg-gray-700 border border-gray-600 rounded focus:ring-2 focus:ring-purple-500 focus:outline-none text-gray-200 placeholder-gray-400"
+          />
 
-      <button type="submit">Reset Password</button>
-    </form>
+          <input
+            type="password"
+            placeholder="New Password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            className="w-full p-3 bg-gray-700 border border-gray-600 rounded focus:ring-2 focus:ring-purple-500 focus:outline-none text-gray-200 placeholder-gray-400"
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded transition"
+          >
+            Reset Password
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
