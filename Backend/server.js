@@ -5,6 +5,7 @@ import morgan from "morgan";
 import cors from "cors";
 import { errorHandler } from "./middlewares/errorMiddleware.js";
 import asanaRoutes from "./routes/asanaRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -18,7 +19,8 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/asanas", asanaRoutes);  
+app.use("/api/asanas", asanaRoutes);
+app.use("/api/users", userRoutes);
 
 // Global error handler
 app.use(errorHandler);
