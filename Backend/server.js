@@ -6,6 +6,7 @@ import cors from "cors";
 import { errorHandler } from "./middlewares/errorMiddleware.js";
 import asanaRoutes from "./routes/asanaRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import progressRoutes from "./routes/progressRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/asanas", asanaRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/progress", progressRoutes);
 
 // Global error handler
 app.use(errorHandler);
