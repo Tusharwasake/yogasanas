@@ -90,16 +90,17 @@ import Progress from "../models/Progress.js";
 //   }
 // };
 
+// import moment from "moment";
+// import Progress from "../models/Progress.js"; // Ensure correct import
+
 // export const logAsana = async (req, res) => {
 //   try {
 //     console.log("📩 Incoming request data:", req.body);
 
-//     const { asanaId, name, difficulty } = req.body;
-//     const userId = req.user?.userId; // ✅ Check if `req.user` is defined
+//     const { userId, asanaName, difficulty, date } = req.body;
 
-//     if (!userId) {
-//       console.error("🚨 User ID not found in request");
-//       return res.status(400).json({ message: "User ID missing from request" });
+//     if (!userId || !asanaName || !difficulty || !date) {
+//       return res.status(400).json({ message: "Missing required fields" });
 //     }
 
 //     let progress = await Progress.findOne({ userId });
@@ -109,22 +110,66 @@ import Progress from "../models/Progress.js";
 //         userId,
 //         goal: 100, // Default goal
 //         progress: { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 },
-//         asanaLog: [], // ✅ Ensure `asanaLog` is initialized
+//         asanaLog: [],
 //         weeklyStats: {},
 //       });
 //     }
 
-//     const today = moment();
-//     const dayOfWeek = today.format("ddd");
+//     const asanaDate = moment(date, "YYYY-MM-DD"); // Convert frontend date to moment object
+//     const weekStart = asanaDate.startOf("isoWeek").toDate(); // Monday as the start of the week
+//     const dayOfWeek = asanaDate.format("ddd"); // Convert date to weekday (Mon, Tue, ...)
 
-//     if (!progress.asanaLog) {
-//       progress.asanaLog = []; // ✅ Ensure it's an array before pushing
+//     console.log(
+//       `🗓️ Logging Asana for: ${asanaDate.format("YYYY-MM-DD")} (${dayOfWeek})`
+//     );
+
+//     // **Reset weekly progress if it's a new week**
+//     if (
+//       !progress.weeklyStats.weekStart ||
+//       moment(progress.weeklyStats.weekStart).isBefore(weekStart)
+//     ) {
+//       progress.weeklyStats.weekStart = weekStart;
+//       progress.weeklyStats.asanasCompleted = 0;
+//       progress.progress = {
+//         Mon: 0,
+//         Tue: 0,
+//         Wed: 0,
+//         Thu: 0,
+//         Fri: 0,
+//         Sat: 0,
+//         Sun: 0,
+//       };
 //     }
 
+//     // **Update streaks**
+//     const lastActivityDate = progress.lastActivity
+//       ? moment(progress.lastActivity)
+//       : null;
+//     if (lastActivityDate && lastActivityDate.isSame(asanaDate, "day")) {
+//       // Same day, no streak increase
+//     } else if (
+//       lastActivityDate &&
+//       lastActivityDate.add(1, "day").isSame(asanaDate, "day")
+//     ) {
+//       progress.streak += 1;
+//     } else {
+//       progress.streak = 1;
+//     }
+
+//     progress.lastActivity = asanaDate.toDate();
 //     progress.totalAsanas += 1;
-//     progress.progress[dayOfWeek] += 1;
+//     progress.progress[dayOfWeek] += 1; // ✅ Updates the correct day from the provided date
 //     progress.weeklyStats.asanasCompleted += 1;
-//     progress.asanaLog.push({ date: today.toDate(), name, difficulty });
+
+//     // ✅ Append Asana Log
+//     if (!progress.asanaLog) {
+//       progress.asanaLog = [];
+//     }
+//     progress.asanaLog.push({
+//       date: asanaDate.toDate(),
+//       name: asanaName,
+//       difficulty,
+//     });
 
 //     console.log("📌 Updated progress before saving:", progress);
 
@@ -142,15 +187,12 @@ export const logAsana = async (req, res) => {
   try {
     console.log("📩 Incoming request data:", req.body);
 
-    const { userId, asanaName, difficulty, date } = req.body; // ✅ Extract request data
-    const formattedDate = moment(date, "YYYY-MM-DD"); // ✅ Ensure correct date format
+    const { userId, asanaName, difficulty, date } = req.body;
 
     if (!userId || !asanaName || !difficulty || !date) {
-      console.error("🚨 Missing required fields in request");
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Find existing progress document
     let progress = await Progress.findOne({ userId });
 
     if (!progress) {
@@ -158,18 +200,21 @@ export const logAsana = async (req, res) => {
         userId,
         goal: 100, // Default goal
         progress: { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 },
-        asanaLog: [], // ✅ Initialize asanaLog array
-        weeklyStats: {
-          weekStart: formattedDate.startOf("isoWeek").toDate(),
-          asanasCompleted: 0,
-        },
+        asanaLog: [],
+        weeklyStats: {},
       });
     }
 
-    const weekStart = formattedDate.startOf("isoWeek").toDate(); // ✅ Get Monday as start of week
-    const dayOfWeek = formattedDate.format("ddd"); // ✅ Convert date to "Mon", "Tue", etc.
+    // 🔹 **Convert provided date correctly**
+    const asanaDate = moment(date, "YYYY-MM-DD");
+    const dayOfWeek = asanaDate.format("ddd"); // ✅ Get correct weekday
 
-    // **Reset weekly progress if it's a new week**
+    console.log(
+      `🗓️ Logging Asana for: ${asanaDate.format("YYYY-MM-DD")} (${dayOfWeek})`
+    );
+
+    // 🔹 **Reset weekly progress if it's a new week**
+    const weekStart = asanaDate.startOf("isoWeek").toDate(); // Start of the week (Monday)
     if (
       !progress.weeklyStats.weekStart ||
       moment(progress.weeklyStats.weekStart).isBefore(weekStart)
@@ -184,39 +229,41 @@ export const logAsana = async (req, res) => {
         Fri: 0,
         Sat: 0,
         Sun: 0,
-      }; // Reset daily stats
+      };
     }
 
-    // **Update streaks**
+    // 🔹 **Update streaks**
     const lastActivityDate = progress.lastActivity
       ? moment(progress.lastActivity)
       : null;
-    if (lastActivityDate && lastActivityDate.isSame(formattedDate, "day")) {
+    if (lastActivityDate && lastActivityDate.isSame(asanaDate, "day")) {
       // Same day, no streak increase
     } else if (
       lastActivityDate &&
-      lastActivityDate.add(1, "day").isSame(formattedDate, "day")
+      lastActivityDate.add(1, "day").isSame(asanaDate, "day")
     ) {
       progress.streak += 1;
     } else {
-      progress.streak = 1; // Reset if a day is skipped
+      progress.streak = 1;
     }
 
-    progress.lastActivity = formattedDate.toDate();
+    progress.lastActivity = asanaDate.toDate();
     progress.totalAsanas += 1;
-    progress.progress[dayOfWeek] += 1; // ✅ Update the correct weekday
-    progress.weeklyStats.asanasCompleted += 1; // ✅ Track weekly total
+    progress.progress[dayOfWeek] += 1; // ✅ **Now updates the correct weekday**
+    progress.weeklyStats.asanasCompleted += 1;
 
-    // **Append to Asana Log**
+    // ✅ Append Asana Log
+    if (!progress.asanaLog) {
+      progress.asanaLog = [];
+    }
     progress.asanaLog.push({
-      date: formattedDate.toDate(),
+      date: asanaDate.toDate(),
       name: asanaName,
-      difficulty: difficulty,
+      difficulty,
     });
 
     console.log("📌 Updated progress before saving:", progress);
 
-    // **Save the updated progress**
     await progress.save();
     console.log("✅ Progress saved successfully!");
 
